@@ -1,0 +1,11 @@
+{
+  "name": "bestie-visit-netlify-sync",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.4"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^3.0.0"
+  }
+}

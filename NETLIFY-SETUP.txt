@@ -1,0 +1,27 @@
+Tutorial singkat setup database Netlify untuk Bestie Visit
+
+1. Upload file berikut ke root project Netlify kamu:
+   - netlify-config.js
+   - netlify.toml
+   - package.json
+   - netlify/functions/rbv-data.mjs
+   - index.html
+   - service-worker.js
+   - version.json
+   - src/app.js
+   - src/app.jsx
+
+2. Deploy ulang lewat Netlify. Kalau deploy dari Git, commit semua file ini lalu redeploy.
+   Kalau deploy manual dari HP, upload folder project yang sudah berisi folder netlify/functions.
+
+3. Setelah deploy, test endpoint ini di browser:
+   https://domain-kamu.netlify.app/.netlify/functions/rbv-data?action=listAppSettings
+   Kalau tampil JSON {"ok":true,...}, function sudah aktif.
+
+4. Buka web > panel rahasia > ubah Welcome Animation / Info Update Website > Simpan.
+   Data akan disimpan di Netlify Blobs dan dibaca device lain dengan polling sekitar 5 detik.
+
+5. Opsional security admin:
+   Di Netlify dashboard > Site configuration > Environment variables, buat RBV_ADMIN_TOKEN.
+   Kalau kamu aktifkan token ini, isi token yang sama di netlify-config.js bagian adminToken.
+   Catatan: token di frontend tidak benar-benar rahasia, ini hanya pengaman dasar.
