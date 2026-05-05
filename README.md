@@ -1,46 +1,70 @@
-# Regional Bestie Visit Report - React Revamp 2026
+# ZIP to GitHub Auto Push v3
 
-Aplikasi audit Regional Bestie berbasis React + Tailwind CSS.
+Web app pribadi untuk upload ZIP, preview, push ke GitHub branch `main`, rollback, dan edit repository lewat **Repo Terminal + Editor** yang nyaman dipakai di HP.
 
-## Isi utama
-- `index.html` - entry point aplikasi.
-- `src/app.jsx` - source React utama.
-- `src/app.js` - hasil compile dari `app.jsx` untuk browser.
-- `src/theme.css` dan `src/tailwind.generated.css` - styling UI.
-- `src/pdf-generator.js` dan `src/pdf-template-assets.js` - generator PDF sesuai template.
-- `data.js` dan `store-master-data.js` - data bestie dan master store.
-- `ca-assignment-export.js` dan `jszip.min.js` - export Excel CA Assignment.
-- `convex-config.js` - konfigurasi monitor admin Convex.
-- `convex-monitor-example.js` - contoh HTTP actions Convex.
+## Fitur utama
 
-## Catatan PDF
-Generator PDF memakai ukuran landscape 16:9 seperti template. Slide QSC/Famitrack menampilkan 2 foto besar berdampingan. Tabel OPI/QSC memakai font 12.5, margin konsisten, dan otomatis membuat halaman baru saat konten penuh.
+- Login GitHub via token.
+- Upload dan extract ZIP di browser.
+- Preview struktur file dan source code.
+- Preview static website dari `index.html` memakai Service Worker + Cache API.
+- Push ZIP ke branch `main`.
+- File path sama ditimpa; file lain di repo tetap ada.
+- Rollback last push atau rollback ke commit terpilih.
+- Repo Terminal + Editor berdasarkan repo yang dipilih.
 
-## Mengaktifkan monitor admin Convex
-1. Deploy HTTP actions di Convex sesuai contoh `convex-monitor-example.js`.
-2. Isi `convex-config.js` dengan `enabled: true`, `httpUrl`, dan path endpoint.
-3. Panel admin dibuka dari logo/title Bestie Visit dengan klik 10x, lalu PIN `607090`.
+## Fitur Repo Terminal
 
-## Revamp v5
-- Mobile navbar dibuat menyamping di bawah dengan padding aman agar tidak menutup konten.
-- Toggle section hanya berfungsi hide/unhide slide; konten QSC, Observation, dan Evidence tampil hanya saat toggle aktif.
-- Crop photo otomatis muncul setelah upload, background halaman dikunci, zoom memakai pinch/gesture tanpa slider.
-- Rich text dipindah ke bawah textbox dengan state hover/active dan perbaikan command bullet/number.
-- PDF menambahkan footer watermark `GENERATE BY BESTIE VISIT WEB REPORT` di semua halaman, General Information memakai label Visitor, dan grid evidence maksimal 6 foto per halaman.
+Setelah login dan pilih repository:
 
-## Revamp v6
-- Mobile header logo diganti menjadi quick section sticky yang ringkas.
-- Semua label `Section 1 - Section 6`, subtitle panduan, dan narasi form yang tidak perlu dihapus dari tampilan utama.
-- Dashboard dibuat lebih minimalis, dilengkapi tombol info blinking untuk panduan Add to Home Screen/PWA.
-- Dropdown Nama Bestie dan Store di modal kunjungan baru serta Section 1 memakai native select agar lebih stabil di mobile.
-- Request toko manual tersimpan sebagai approval queue di Panel Admin.
-- Store Leader tidak lagi auto-fill dari master data; input manual.
-- Crop/marker photo popup diperbaiki agar proporsional dan body tidak ikut scroll.
-- Preview PDF diganti menjadi canvas-based preview menggunakan PDF.js agar ukuran slide mengikuti layar mobile.
+1. Klik **Load Workspace Repo**.
+2. Gunakan tombol cepat atau command:
+   - `help`
+   - `pwd`
+   - `ls`
+   - `cd folder`
+   - `open file`
+   - `new file`
+   - `save`
+   - `touch file`
+   - `mkdir folder`
+   - `rm file`
+   - `status`
+   - `discard`
+   - `commit pesan commit`
+   - `pull`
+   - `clear`
+3. Edit isi file di editor.
+4. Klik **Stage Save**.
+5. Klik **Commit Staged ke main**.
 
-## Revamp v7
-- Memperbaiki alignment dashboard home, field select, dan date input di mobile.
-- Rich text toolbar dibuat lebih proper; bullet dan number sekarang muncul di editor saat tombol dipilih.
-- Popup crop & marker dibuat proporsional dengan kanvas 1:1 dan gesture tetap smooth.
-- Preview PDF diperbaiki agar tidak loading/blinking berulang di mobile.
-- PDF evidence menggunakan foto rasio 1:1 yang lebih jelas pada grid.
+## Kenapa bukan terminal Linux asli?
+
+GitHub repository tidak menyediakan shell terminal langsung. Terminal di app ini adalah terminal kontrol repository berbasis GitHub API. Ini bisa berjalan di Vercel static app tanpa backend.
+
+Untuk command runtime sungguhan seperti `npm install`, `php artisan`, atau `python app.py`, gunakan runner Docker opsional di folder `runner/`.
+
+## Deploy ke Vercel
+
+1. Push folder ini ke GitHub.
+2. Import ke Vercel.
+3. Framework preset: `Other`.
+4. Build command: kosong.
+5. Output directory: root/kosong.
+
+## Permission token
+
+Minimal:
+
+- Contents: Read and write
+- Metadata: Read-only
+
+Jika mengedit `.github/workflows/*`, token mungkin butuh permission Workflows.
+
+## Mobile UX
+
+- Portrait: terminal dan editor bertumpuk.
+- Landscape: terminal dan editor berdampingan.
+- Tombol command besar.
+- Input terminal sticky.
+- Font-size input 16px untuk mengurangi auto-zoom di HP.

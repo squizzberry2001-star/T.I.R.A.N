@@ -1,39 +1,241 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f766e" />
-  <meta name="app-build-version" content="revamp66-home-nav-loading-secret-spark-pdf-spacing" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Bestie Visit" />
-  <link rel="manifest" href="manifest.webmanifest?v=revamp66-home-nav-loading-secret-spark-pdf-spacing" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png?v=revamp66-home-nav-loading-secret-spark-pdf-spacing" />
-  <title>Regional Bestie Visit Report</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="src/tailwind.generated.css?v=revamp66-home-nav-loading-secret-spark-pdf-spacing" />
-  <link rel="stylesheet" href="src/theme.css?v=revamp66-home-nav-loading-secret-spark-pdf-spacing" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIP to GitHub Auto Push</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script defer src="./app.js"></script>
+  <script defer src="./terminal.js"></script>
 </head>
-<body class="bg-audit-bg text-audit-ink antialiased">
-  <noscript>Aktifkan JavaScript untuk menggunakan Regional Bestie Visit Report.</noscript>
-  <div id="root"></div>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Personal GitHub ZIP Publisher</p>
+      <h1>Auto Push ZIP + Repo Terminal</h1>
+      <p class="subtitle">
+        Upload ZIP, preview isi file, jalankan preview statis lewat virtual local server, lalu push otomatis ke branch <strong>main</strong>.
+      </p>
+    </div>
+    <div class="badge">Mobile terminal ready</div>
+  </header>
 
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-  <script src="data.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="store-master-data.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="jszip.min.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="netlify-config.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="ca-assignment-export.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="src/pdf-template-assets.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="src/pdf-generator.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
-  <script src="src/app.js?v=revamp66-home-nav-loading-secret-spark-pdf-spacing"></script>
+  <main class="layout">
+    <section class="panel">
+      <h2>1. GitHub Auth</h2>
+      <p class="muted">
+        Gunakan Fine-grained Personal Access Token dengan akses repository target dan permission
+        <strong>Contents: Read and write</strong>. Token disimpan hanya di browser Anda.
+      </p>
+      <label>GitHub Token</label>
+      <div class="row">
+        <input id="tokenInput" type="password" placeholder="github_pat_..." autocomplete="off" />
+        <button id="loginBtn">Login</button>
+      </div>
+      <label class="check">
+        <input id="rememberToken" type="checkbox" />
+        Simpan token di localStorage browser ini
+      </label>
+      <div id="authStatus" class="status">Belum login.</div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Upload ZIP</h2>
+      <p class="muted">
+        File ZIP diekstrak di browser. Tidak dikirim ke server Vercel.
+      </p>
+      <input id="zipInput" type="file" accept=".zip,application/zip" />
+      <div id="zipStatus" class="status">Belum ada ZIP.</div>
+      <div id="projectSummary" class="summary"></div>
+    </section>
+
+    <section class="panel span-2">
+      <h2>3. Preview File</h2>
+      <div class="split">
+        <div>
+          <div class="toolbar">
+            <button id="expandAllBtn">Refresh Tree</button>
+            <button id="downloadExtractedBtn">Download Extracted ZIP</button>
+          </div>
+          <div id="fileTree" class="file-tree empty">Upload ZIP untuk melihat struktur file.</div>
+        </div>
+        <div>
+          <div class="code-head">
+            <span id="selectedFileName">Belum ada file dipilih</span>
+            <span id="selectedFileMeta"></span>
+          </div>
+          <pre id="codePreview" class="code-preview">Pilih file teks untuk preview.</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel span-2">
+      <h2>4. Jalankan / Preview Website</h2>
+      <p class="muted">
+        Preview static sekarang memakai Service Worker + Cache API, jadi asset relatif, root path seperti
+        <code>/assets/app.js</code>, CSS, gambar, dan module import lebih stabil daripada iframe srcdoc.
+        Untuk backend campuran tetap gunakan runner Docker opsional.
+      </p>
+      <div class="row wrap">
+        <button id="staticPreviewBtn">Preview Static index.html</button>
+        <button id="openPreviewBtn">Open Preview Tab</button>
+        <input id="runnerUrlInput" placeholder="Optional runner URL, contoh: http://127.0.0.1:7319" />
+        <button id="runnerBtn">Run via Runner</button>
+      </div>
+      <div id="runStatus" class="status">Belum dijalankan.</div>
+      <iframe id="previewFrame" title="Website preview" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"></iframe>
+    </section>
+
+    <section class="panel">
+      <h2>5. Repository</h2>
+      <div class="row">
+        <button id="loadReposBtn">Review Repositories</button>
+      </div>
+      <label>Pilih Repository</label>
+      <select id="repoSelect">
+        <option value="">Login lalu load repo...</option>
+      </select>
+
+      <details>
+        <summary>Create Repository Baru</summary>
+        <label>Nama repo baru</label>
+        <input id="newRepoName" placeholder="nama-repo" />
+        <label>Visibility</label>
+        <select id="newRepoPrivate">
+          <option value="true">Private</option>
+          <option value="false">Public</option>
+        </select>
+        <button id="createRepoBtn">Create Repo</button>
+      </details>
+
+      <label>Target folder di repo, kosong = root</label>
+      <input id="targetFolderInput" placeholder="contoh: uploads/project-a" />
+      <div id="repoStatus" class="status">Repository belum dipilih.</div>
+    </section>
+
+    <section class="panel">
+      <h2>6. Push ke GitHub main</h2>
+      <p class="muted">
+        File dengan path sama akan ditimpa. File lain di repository tetap dipertahankan.
+      </p>
+      <label>Commit message</label>
+      <input id="commitMessageInput" value="Upload extracted ZIP files" />
+      <button id="pushBtn" class="primary">Push ZIP ke GitHub</button>
+      <progress id="pushProgress" value="0" max="100"></progress>
+      <div id="pushStatus" class="status">Belum push.</div>
+      <details open>
+        <summary>Log push / error detail</summary>
+        <pre id="logOutput" class="logs"></pre>
+      </details>
+    </section>
+
+
+    <section class="panel span-2 terminal-panel">
+      <div class="terminal-titlebar">
+        <div>
+          <h2>7. Repo Terminal + Editor</h2>
+          <p class="muted">
+            Terminal ini mengikuti repository yang dipilih. Dibuat untuk HP: tombol cepat, input sticky,
+            dan layout otomatis untuk layar vertikal maupun horizontal.
+          </p>
+        </div>
+        <button id="loadWorkspaceBtn">Load Workspace Repo</button>
+      </div>
+
+      <div class="terminal-statusbar">
+        <span id="terminalRepoBadge">Repo: belum dipilih</span>
+        <span id="terminalPathBadge">Path: /</span>
+        <span id="terminalStageBadge">Stage: 0</span>
+      </div>
+
+      <div class="terminal-layout">
+        <div class="terminal-side">
+          <div class="quick-row">
+            <select id="terminalFileSelect">
+              <option value="">File repo...</option>
+            </select>
+            <button id="terminalOpenSelectedBtn">Open</button>
+          </div>
+
+          <div class="quick-buttons">
+            <button data-terminal-run="help">help</button>
+            <button data-terminal-run="pwd">pwd</button>
+            <button data-terminal-run="ls">ls</button>
+            <button data-terminal-run="cd ..">cd ..</button>
+            <button data-terminal-insert="cd ">cd</button>
+            <button data-terminal-insert="open ">open</button>
+            <button data-terminal-run="status">status</button>
+            <button data-terminal-run="save">save</button>
+            <button data-terminal-insert="new ">new</button>
+            <button data-terminal-insert="mkdir ">mkdir</button>
+            <button data-terminal-insert="rm ">rm</button>
+            <button data-terminal-insert="commit ">commit</button>
+            <button data-terminal-run="pull">pull</button>
+            <button data-terminal-run="clear">clear</button>
+          </div>
+
+          <div id="terminalOutput" class="terminal-output" aria-live="polite"></div>
+
+          <div class="terminal-inputbar">
+            <span id="terminalPrompt">/ $</span>
+            <input
+              id="terminalInput"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="ketik command atau pakai tombol cepat"
+            />
+            <button id="terminalRunBtn">Run</button>
+          </div>
+        </div>
+
+        <div class="editor-side">
+          <div class="editor-head">
+            <input id="editorPathInput" placeholder="path/file.ext" autocapitalize="off" spellcheck="false" />
+            <button id="editorSaveBtn">Stage Save</button>
+          </div>
+          <textarea
+            id="repoEditor"
+            class="repo-editor"
+            autocapitalize="off"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Open file repo atau buat file baru dari terminal..."
+          ></textarea>
+          <div class="editor-actions">
+            <button id="editorNewBtn">New File</button>
+            <button id="editorReloadBtn">Reload File</button>
+            <button id="editorDeleteBtn" class="danger-btn">Stage Delete</button>
+            <button id="terminalCommitBtn" class="primary small-primary">Commit Staged ke main</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel span-2">
+      <h2>8. Rollback GitHub main</h2>
+      <p class="muted">
+        Rollback akan memindahkan pointer branch <strong>main</strong> ke commit sebelumnya/commit yang dipilih.
+        Commit lama tidak dihapus dari GitHub history, tetapi branch main kembali ke kondisi commit tersebut.
+      </p>
+      <div class="row wrap">
+        <button id="loadCommitsBtn">Load Recent Commits</button>
+        <button id="rollbackLastBtn">Rollback Last Push dari App Ini</button>
+        <select id="commitSelect">
+          <option value="">Load commits dulu...</option>
+        </select>
+        <button id="rollbackSelectedBtn" class="danger-btn">Rollback ke Commit Terpilih</button>
+      </div>
+      <div id="rollbackStatus" class="status">Rollback belum dijalankan.</div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Built for personal use. Jangan gunakan token dengan permission lebih besar dari yang dibutuhkan.
+    </p>
+  </footer>
 </body>
 </html>
